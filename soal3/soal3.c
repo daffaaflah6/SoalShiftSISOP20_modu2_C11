@@ -52,39 +52,54 @@ int main(){
           pid_t child_team = fork();
 	  struct stat st;
 	  stat(dir->d_name, &st);
+	  if(child_team < 0){
+	    exit(EXIT_FAILURE);
+	  }
           if(child_team == 0){
             char path_file[1000];
             sprintf(path_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/jpg/%s", dir->d_name);
             if(S_ISDIR(st.st_mode)){
               if(strcmp(dir->d_name, ".") == 0 || strcmp(dir->d_name, "..") == 0);
               else{
-               char* argv[] = {"mv", path_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/", NULL};
-               execv("/bin/mv", argv);
+		pid_t child_txt = fork();
+		if(child_txt < 0){
+		  exit(EXIT_FAILURE);
+		}
+		if(child_txt == 0){
+                  char* argv[] = {"mv", path_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/", NULL};
+                  execv("/bin/mv", argv);
+		}
+		else{
+		  //soal 3d
+	          while((dir = readdir(directory)) != NULL){
+	            pid_t child_indomie = fork();
+		    int kasus;
+ 	            if(child_indomie == 0){
+ 	              char target_file[1000];
+	              FILE *target;
+	              sprintf(target_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/%s/coba1.txt", dir->d_name);
+                      target = fopen(target_file,"w");
+                      fclose(target);
+                    }
+	            else{
+	              while((wait(&kasus)) > 0);
+	              sleep(3);
+ 	              char target_file[1000];
+	              FILE *target;
+	              sprintf(target_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/%s/coba2.txt", dir->d_name);
+	              target = fopen(target_file,"w");
+	              fclose(target);
+		      exit(0);
+	            }
+	          }
+		}
               }
             }
             else{
               char* argv[] = {"mv", path_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/sedaap/", NULL};
               execv("/bin/mv", argv);
-	    }
-	    //soal 3d
-	    while((wait(&status)) > 0);
- 	    if(fork() == 0){
- 	      char target_file[1000];
-	      FILE *target;
-	      sprintf(target_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/%s/coba1.txt", dir->d_name);
-              target = fopen(target_file,"w");
-              fclose(target);
             }
-	    else{
-	      while((wait(&status)) > 0);
-	      sleep(3);
- 	      char target_file[1000];
-	      FILE *target;
-	      sprintf(target_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/%s/coba2.txt", dir->d_name);
-	      target = fopen(target_file,"w");
-	      fclose(target);
-	    }	  
-          }
+ 	  }
         }
         closedir(directory);
       }
