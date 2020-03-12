@@ -65,7 +65,25 @@ int main(){
             else{
               char* argv[] = {"mv", path_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/sedaap/", NULL};
               execv("/bin/mv", argv);
+	    }
+	    //soal 3d
+	    while((wait(&status)) > 0);
+ 	    if(fork() == 0){
+ 	      char target_file[1000];
+	      FILE *target;
+	      sprintf(target_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/%s/coba1.txt", dir->d_name);
+              target = fopen(target_file,"w");
+              fclose(target);
             }
+	    else{
+	      while((wait(&status)) > 0);
+	      sleep(3);
+ 	      char target_file[1000];
+	      FILE *target;
+	      sprintf(target_file, "/home/syarif/sisop20/modul2/shift_modul2/soal3/indomie/%s/coba2.txt", dir->d_name);
+	      target = fopen(target_file,"w");
+	      fclose(target);
+	    }	  
           }
         }
         closedir(directory);
