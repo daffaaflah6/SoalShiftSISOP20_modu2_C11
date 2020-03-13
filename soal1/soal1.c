@@ -29,7 +29,7 @@ int main(int argc, char** argv){
         int waktu[4], i;
         for(i=1; i<4; i++){
             if(check_number(argv[i])){
-                sscanf(argv[i], "%d", &waktu[i]);;
+                sscanf(argv[i], "%d", &waktu[i]);
             } else if(cek_bintang(argv[i])){
                 waktu[i] = -1;
             } else {
@@ -40,11 +40,6 @@ int main(int argc, char** argv){
 
         if(waktu[0] > 59 && waktu[1] > 59 && waktu[2] > 23){
             printf("argument is not valid.\n");
-        }
-
-        for(i=1; i<5; i++){
-                printf("%d\n", waktu[i]);
-                printf("%s\n", argv[i]);
         }
 
         pid_t pid, sid;
