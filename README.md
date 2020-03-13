@@ -111,6 +111,7 @@ while(1){
 
 # 2. Program impian Kiwa
 Source Code : [soal2.c](https://github.com/daffaaflah6/SoalShiftSISOP20_modul2_C11/blob/master/soal2/soal2.c)
+
 a. Pertama-tama, Kiwa membuat sebuah folder khusus, di dalamnya dia membuat sebuah program C yang per 30 detik membuat sebuah folder dengan nama timestamp [YYYY-mm-dd_HH:ii:ss].
 
 ```c
