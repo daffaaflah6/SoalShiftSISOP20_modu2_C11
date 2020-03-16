@@ -37,66 +37,42 @@ int main(){
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
 
-    time_t now;
-    struct tm* info;
+    while(1){
+        time_t now;
+        time(&now);
+        struct tm *local = localtime(&now);
+        char dirname[100];
+        pid_t c;
+        c = fork();
 
-    while (1) 
-  {
-    now = time(NULL);
-    info = localtime(&now);
+        strftime(dirname, 100, "%G-%m-%d_%H:%M:%S", local);
+        if(c==0){
+            c = fork();
+            if(c==0){
+                execl("/usr/bin/mkdir", "mkdir", "-p", dirname, NULL);
+                }
+                wait(NULL);
 
-    char dirname[100];
-    strftime(dirname, 100, "%Y-%m-%d_%H:%M:%S", info);
+            for(int i=0; i<20; i++){
+                c = fork();
+                if(c==0){
+                    time_t now1;
+                    time(&now1);
+                    struct tm *local1 = localtime(&now1);
+                    char web[100];
+                    char name[100];
+                    int pixel;
 
-    pid_t c;
-    c = fork();
-
-    int status;
-
-    if (c < 0) 
-      exit(EXIT_FAILURE);
-
-    if (c == 0)
-    { 
-      if (fork() == 0)
-      {
-        char *argv[] = {"mkdir", "-p", dirname, NULL};
-        execv("/bin/mkdir", argv);
-      }
-      else 
-      {
-        while ((wait(&status)) > 0);
-        for (int i = 0; i < 20; i++)
-        {
-          if (fork() == 0)
-          {
-            chdir(dirname);
-            time_t now1;
-            struct tm* info1;
-        
-            now1 = time(NULL);
-            info1 = localtime(&now1);
-        
-            int t = (int)time(NULL);
-            t = (t % 1000) + 100;
-            
-            char web[100];
-            sprintf(web, "https://picsum.photos/%d", t);
-
-            char name[100];
-            strftime(name, 100, "%Y-%m-%d_%H:%M:%S", info1);
-            char *argv[] = {"wget", web, "-qO", name, NULL};
-            execv("/usr/bin/wget", argv);
-          }
-          sleep(5);
+                    pixel=now1%1000+100;
+                    snprintf(web, 100, "https://picsum.photos/%d", pixel);
+                    strftime(name, 100, "%G-%m-%d_%H:%M:%S.jpg", local1);
+                    chdir(dirname);
+                    execl("/usr/bin/wget", "wget", web, "-O", name, NULL);
+            }
+            sleep(5);
+            wait(NULL);
         }
-        char zipname[150];
-        sprintf(zipname, "%s.zip", dirname);
-        char *argv[] = {"zip", "-qrm", zipname, dirname, NULL};
-        execv("/usr/bin/zip", argv);
-      }
+        }
+        sleep(30);
     }
-    else
-      sleep(30);
-  }
-}
+} 
