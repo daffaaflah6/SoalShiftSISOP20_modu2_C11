@@ -11,7 +11,44 @@
 #include <dirent.h>
 #include <wait.h>
 
-int main(){
+void killer(char array[])
+{
+  FILE *target;
+  target = fopen("killer.sh", "w");
+  int status;
+
+  if (strcmp(array, "-a") == 0)
+    fprintf(target, "#!/bin/bash\nkill -9 -%d", getpid());
+
+  if (strcmp(array, "-b") == 0)
+    fprintf(target, "#!/bin/bash\nkill %d", getpid());
+  
+  if(fork() == 0)
+  {  
+    if (fork() == 0)
+    {
+      char *argv[] = {"chmod", "u+x", "killer.sh", NULL};
+      execv("/bin/chmod", argv);
+    }
+    else
+    {
+      while ((wait(&status)) > 0);    
+
+      char *argv[] = {"mv", "killer.sh", "killer", NULL};
+      execv("/bin/mv", argv);
+    }
+  }
+    
+  fclose(target);
+}
+
+int main(int argc, char** argv){
+    if(argc != 2)
+  {
+    puts("argument is not valid");
+    exit(EXIT_FAILURE);
+  }
+
     pid_t pid, sid;
 
     pid = fork();
@@ -32,6 +69,8 @@ int main(){
     if (sid < 0) {
         exit(EXIT_FAILURE);
     }
+
+    killer(argv[1]);
 
     close(STDIN_FILENO);
     close(STDOUT_FILENO);
