@@ -115,67 +115,151 @@ Source Code : [soal2.c](https://github.com/daffaaflah6/SoalShiftSISOP20_modul2_C
 a. Pertama-tama, Kiwa membuat sebuah folder khusus, di dalamnya dia membuat sebuah program C yang per 30 detik membuat sebuah folder dengan nama timestamp [YYYY-mm-dd_HH:ii:ss].
 
 ```c
- while(1){
-    time_t now;
-    time(&now);
-    struct tm *local = localtime(&now);
+ while (1) 
+  {
+    now = time(NULL);
+    info = localtime(&now);
+
     char dirname[100];
+    strftime(dirname, 100, "%Y-%m-%d_%H:%M:%S", info);
+
     pid_t c;
     c = fork();
 
-    strftime(dirname, 100, "%G-%m-%d_%H:%M:%S", local);
-    if(c==0){
-        c = fork();
-        if(c==0){
-            execl("/usr/bin/mkdir", "mkdir", "-p", dirname, NULL);
-            }
-            wait(NULL);
+    int status;
+
+    if (c < 0) 
+      exit(EXIT_FAILURE);
+
+    if (c == 0)
+    { 
+      if (fork() == 0)
+      {
+        char *argv[] = {"mkdir", "-p", dirname, NULL};
+        execv("/bin/mkdir", argv);
+      }
 ```
 - Di-fork terlebih dahulu untuk membuat child process yang di dalamnya ada eksekusi dari membuat folder yang dilakukan setiap 30 detik. 
 - strftime digunakan untuk memasukkan tahun-bulan-hari_jam-menit-detik ke string bernama dirname yang akan digunakan untuk membuat directory.
-- wait(NULL) digunakan untuk menunda program setelahnya agar menunggu.
 
 b. Tiap-tiap folder lalu diisi dengan 20 gambar yang di download dari https://picsum.photos/, dimana tiap gambar di download setiap 5 detik. Tiap gambar berbentuk persegi dengan ukuran (t%1000)+100 piksel dimana t adalah detik Epoch Unix. Gambar tersebut diberi nama dengan format timestamp [YYYY-
 mm-dd_HH:ii:ss].
 
 ```c
-for(int i=0; i<20; i++){
-    c = fork();
-    if(c==0){
-    time_t now1;
-    time(&now1);
-    struct tm *local1 = localtime(&now1);
-    char web[100];
-    char name[100];
-    int pixel;
+else 
+      {
+        while ((wait(&status)) > 0);
+        for (int i = 0; i < 20; i++)
+        {
+          if (fork() == 0)
+          {
+            chdir(dirname);
+            time_t now1;
+            struct tm* info1;
+        
+            now1 = time(NULL);
+            info1 = localtime(&now1);
+        
+            int t = (int)time(NULL);
+            t = (t % 1000) + 100;
+            
+            char web[100];
+            sprintf(web, "https://picsum.photos/%d", t);
 
-    pixel=now1%1000+100;
-
-    snprintf(web, 100, "https://picsum.photos/%d", pixel);
-    strftime(name, 100, "%G-%m-%d_%H:%M:%S.jpg", local1);
-    chdir(dirname);
-    execl("/usr/bin/wget", "wget", web, "-O", name, NULL);
-    }
+            char name[100];
+            strftime(name, 100, "%Y-%m-%d_%H:%M:%S", info1);
+            char *argv[] = {"wget", web, "-qO", name, NULL};
+            execv("/usr/bin/wget", argv);
+          }
+          sleep(5);
+        }
 ```
 - Melakukan download di setiap folder yang sudah dibuat. Oleh karena itu membutuhkan fork lagi untuk membuat child process.
-- snprintf digunakan untuk menyimpan url pada string web dan menyimpan ukuran dari foto tersebut.
+- sprintf digunakan untuk menyimpan url pada string web dan menyimpan ukuran dari foto tersebut.
 - Dilakukan chdir agar download-an yang akan dilakukan masuk ke directory yang diinginkan.
-- Eksekusi dari wget menggunakan execl.
-
-```c
-sleep(5);
-            wait(NULL);
-        }
-        }
-        sleep(30);
-```
-- Proses download dilakukan setiap 5s dan proses pembuatan directory dilakukan setiap 30s.
+- Eksekusi dari wget menggunakan execv.
 
 c. Agar rapi, setelah sebuah folder telah terisi oleh 20 gambar, folder akan di zip dan folder akan di delete(sehingga hanya menyisakan .zip).
+```c
+char zipname[150];
+        sprintf(zipname, "%s.zip", dirname);
+        char *argv[] = {"zip", "-qrm", zipname, dirname, NULL};
+        execv("/usr/bin/zip", argv);
+```
+- Zip dinamai sesuai nama folder awal sehingga perlu disave di-array bernama zipname untuk menyimpan nama folder awal dan sekaligus diremove menggunakan -rm.
+- Digunakan excv untuk mengeksekusi zip.
 
 d. Karena takut program tersebut lepas kendali, Kiwa ingin program tersebut men-generate sebuah program "killer" yang siap di run(executable) untuk menterminasi semua operasi program tersebut. Setelah di run, program yang menterminasi ini lalu akan mendelete dirinya sendiri.
+```c
+void killer(char array[])
+{
+  FILE *target;
+  target = fopen("killer.sh", "w");
+  int status;
+
+  if (strcmp(array, "-a") == 0)
+    fprintf(target, "#!/bin/bash\nkill -9 -%d", getpid());
+
+  if (strcmp(array, "-b") == 0)
+    fprintf(target, "#!/bin/bash\nkill %d", getpid());
+  
+  if(fork() == 0)
+  {  
+    if (fork() == 0)
+    {
+      char *argv[] = {"chmod", "u+x", "killer.sh", NULL};
+      execv("/bin/chmod", argv);
+    }
+    else
+    {
+      while ((wait(&status)) > 0);    
+
+      char *argv[] = {"mv", "killer.sh", "killer", NULL};
+      execv("/bin/mv", argv);
+    }
+  }
+    
+  fclose(target);
+}
+```
+- Killer dibuat menggunakan bash "chmod", "u+x", "killer.sh" dan kemudian direname menjadi killer.
 
 e. Kiwa menambahkan bahwa program utama bisa dirun dalam dua mode, yaitu MODE_A dan MODE_B. untuk mengaktifkan MODE_A, program harus dijalankan dengan argumen -a. Untuk MODE_B, program harus dijalankan dengan argumen -b. Ketika dijalankan dalam MODE_A, program utama akan langsung menghentikan semua operasinya ketika program killer dijalankan. Untuk MODE_B, ketika program killer dijalankan, program utama akan berhenti tapi membiarkan proses di setiap folder yang masih berjalan sampai selesai (semua folder terisi gambar, terzip lalu di delete).
+```c
+void killer(char array[])
+{
+  FILE *target;
+  target = fopen("killer.sh", "w");
+  int status;
+
+  if (strcmp(array, "-a") == 0)
+    fprintf(target, "#!/bin/bash\nkill -9 -%d", getpid());
+
+  if (strcmp(array, "-b") == 0)
+    fprintf(target, "#!/bin/bash\nkill %d", getpid());
+  
+  if(fork() == 0)
+  {  
+    if (fork() == 0)
+    {
+      char *argv[] = {"chmod", "u+x", "killer.sh", NULL};
+      execv("/bin/chmod", argv);
+    }
+    else
+    {
+      while ((wait(&status)) > 0);    
+
+      char *argv[] = {"mv", "killer.sh", "killer", NULL};
+      execv("/bin/mv", argv);
+    }
+  }
+    
+  fclose(target);
+}
+```
+
+- strcmp untuk melihat apakah inputan -a atau -b.
+- Apabila menggunakan -a akan langsung dikill tanpa menunggu program selesai berjalan sedangkan untuk -b dikill tanpa menggunakan -9 sehingga proses kill berjalan pelan-pelan.
 
 # 3. Folder dalam Folder
 Source Code : [soal3.c](https://github.com/daffaaflah6/SoalShiftSISOP20_modul2_C11/blob/master/soal3/soal3.c)
