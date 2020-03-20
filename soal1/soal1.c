@@ -76,8 +76,13 @@ int main(int argc, char** argv){
             skrg3 = local->tm_sec;
 
             if((skrg1 == waktu[3] || waktu[3] == -1) && (skrg2 == waktu[2] || waktu[2] == -1) && (skrg3 == waktu[1] || waktu[1] == -1)){
+                pid_t child_id;
+                child_id = fork();
+                
+                if(child_id==0){
                 char *arg[] = {"bash", argv[4], NULL};
                 execv("/bin/bash", arg);
+                }
         } sleep(1);
         }
     } else {
